@@ -1,0 +1,16 @@
+{
+  "name": "recall",
+  "description": "Compressed memory notation system for Claude Code",
+  "owner": {
+    "name": "stark-shark",
+    "url": "https://github.com/stark-shark"
+  },
+  "plugins": [
+    {
+      "name": "recall",
+      "description": "MCP tools for compressed memory notation — read, write, search, and manage memories with notation enforcement, cross-project search, and health checks.",
+      "version": "0.1.0",
+      "source": "./"
+    }
+  ]
+}

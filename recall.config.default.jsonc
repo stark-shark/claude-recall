@@ -1,0 +1,24 @@
+{
+  // Keep MEMORY.md updated on every recall_save
+  "maintainIndex": true,
+  "indexFile": "MEMORY.md",
+  "indexMaxLines": 200,
+  "registryFile": "REGISTRY.md",
+
+  // "strict" = reject plain English, "warn" = flag but save, "off" = no validation
+  "notationEnforcement": "warn",
+
+  // Auto-populated header fields on save/load
+  "headerFields": {
+    "dates": true,        // C: (created) and U: (updated)
+    "accessCount": true,  // A: incremented on recall_load
+    "links": true         // L: bidirectional link maintenance
+  },
+
+  // Thresholds for recall_check health reports
+  "healthChecks": {
+    "staleDays": 30,              // Days since U: before flagging
+    "staleMinAccess": 2,          // Access count below which stale memories get flagged
+    "compressionTolerancePct": 10 // Allowed % above target compression ratio
+  }
+}

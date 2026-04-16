@@ -1,0 +1,28 @@
+{
+  "name": "recall-mcp",
+  "version": "0.1.0",
+  "description": "Recall — MCP server for compressed memory notation in Claude Code",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "author": "stark-shark",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stark-shark/claude-recall.git"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.4"
+  }
+}

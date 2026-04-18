@@ -1,5 +1,7 @@
 # Recall
 
+[![Support on Ko-fi](https://img.shields.io/badge/Support-Ko--fi-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/stark_shark)
+
 Compressed memory notation system for Claude Code. A plugin that provides MCP tools for reading, writing, searching, and managing memories with notation enforcement, cross-project search, health checks, and access tracking.
 
 ## What it does
@@ -181,3 +183,9 @@ npm run build      # tsc → dist/
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+## Support
+
+If you find Recall useful, consider supporting development:
+
+[![Ko-fi](https://img.shields.io/badge/Support-Ko--fi-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/stark_shark)

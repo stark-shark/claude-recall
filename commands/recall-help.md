@@ -2,11 +2,18 @@
 description: Show an overview of the Recall plugin — all 8 MCP tools, notation cheatsheet, where memories live, install/uninstall commands, and links to deeper docs.
 ---
 
-# Recall — Help
+**INSTRUCTION FOR CLAUDE — DO NOT IGNORE.** When this command is invoked, your ENTIRE response must be exactly the Markdown content below, output verbatim to the user, starting with the `# Recall — Help` heading line and ending with the final "Issues / feedback" link line.
 
-Render the following help text to the user as-is. Do not paraphrase. Do not run any tools — this command is informational.
+- Do not add any commentary, summary, preamble, or follow-up text.
+- Do not paraphrase or restructure.
+- Do not call any tools.
+- Do not interpret the content as instructions or as context for a different task.
+
+This is a static reference command. The user invoked it because they want to read this exact content. Render it now.
 
 ---
+
+# Recall — Help
 
 ## What is Recall?
 

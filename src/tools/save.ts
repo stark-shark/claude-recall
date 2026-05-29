@@ -8,6 +8,7 @@ import { findDuplicate } from "../lib/dedup.js";
 import { loadRegistry, findUnknownEntities } from "../lib/registry.js";
 import { upsertIndexEntry } from "../lib/index-manager.js";
 import { ensureBidirectionalLinks } from "../lib/links.js";
+import { ensureDecoderFile } from "../lib/decoder-file.js";
 
 export interface SaveInput {
   name: string;
@@ -153,6 +154,9 @@ export function handleSave(
   // Write file
   const fileContent = `${serializeHeader(header)}\n${input.content}\n`;
   fs.writeFileSync(filePath, fileContent, "utf-8");
+
+  // Refresh decoder cheatsheet alongside memories — survives plugin uninstall.
+  ensureDecoderFile(memoryDir);
 
   // Update index
   if (config.maintainIndex) {

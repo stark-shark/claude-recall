@@ -15,7 +15,7 @@
 ### indexMaxLines
 - **Type:** number
 - **Default:** 200
-- **Description:** Maximum number of lines in the index file. Entries beyond this limit are truncated.
+- **Description:** Maximum number of index ENTRIES (`- [name](file) — desc` lines). Headers, section titles, and blank lines are not counted. When exceeded, the oldest (topmost) entries are moved to `MEMORY_ARCHIVE.md` in the same directory — never deleted. Restore an entry by moving its line back to the index.
 
 ### registryFile
 - **Type:** string

@@ -70,4 +70,47 @@ describe("handleSave", () => {
     const index = fs.readFileSync(path.join(tmpDir, "MEMORY.md"), "utf-8");
     expect(index).toContain("LAST");
   });
+
+  it("archives overflow entries to MEMORY_ARCHIVE.md instead of deleting them", () => {
+    const cappedConfig = { ...DEFAULT_CONFIG, indexMaxLines: 3 };
+    for (let i = 0; i < 5; i++) {
+      handleSave(
+        { name: `M${i}`, type: "fb", description: "d", content: `rule: ${i}\n:: r\n(+) t` },
+        tmpDir,
+        cappedConfig
+      );
+    }
+    const index = fs.readFileSync(path.join(tmpDir, "MEMORY.md"), "utf-8");
+    const archive = fs.readFileSync(path.join(tmpDir, "MEMORY_ARCHIVE.md"), "utf-8");
+    // Oldest two rotated out, newest three kept
+    expect(index).not.toContain("(feedback_m0.md)");
+    expect(index).not.toContain("(feedback_m1.md)");
+    expect(index).toContain("M4");
+    expect(archive).toContain("(feedback_m0.md)");
+    expect(archive).toContain("(feedback_m1.md)");
+  });
+
+  it("counts entries, not raw lines, against indexMaxLines", () => {
+    const indexPath = path.join(tmpDir, "MEMORY.md");
+    fs.writeFileSync(
+      indexPath,
+      "# Memory Index\n\n## Section A\n\n## Section B\n\n## Section C\n",
+      "utf-8"
+    );
+    const cappedConfig = { ...DEFAULT_CONFIG, indexMaxLines: 3 };
+    for (let i = 0; i < 3; i++) {
+      handleSave(
+        { name: `N${i}`, type: "fb", description: "d", content: `rule: ${i}\n:: r\n(+) t` },
+        tmpDir,
+        cappedConfig
+      );
+    }
+    // 3 entries + 7 structural lines would exceed a LINE budget of 3, but no
+    // archive should occur because only entries count.
+    expect(fs.existsSync(path.join(tmpDir, "MEMORY_ARCHIVE.md"))).toBe(false);
+    const index = fs.readFileSync(indexPath, "utf-8");
+    expect(index).toContain("N0");
+    expect(index).toContain("N2");
+    expect(index).toContain("## Section C");
+  });
 });

@@ -2,7 +2,7 @@
   // Keep MEMORY.md updated on every recall_save
   "maintainIndex": true,
   "indexFile": "MEMORY.md",
-  "indexMaxLines": 200,
+  "indexMaxLines": 200, // max index ENTRIES (not raw lines); overflow rotates to MEMORY_ARCHIVE.md
   "registryFile": "REGISTRY.md",
 
   // "strict" = reject plain English, "warn" = flag but save, "off" = no validation

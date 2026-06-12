@@ -6,7 +6,7 @@ import { serializeHeader, parseHeader, stripHeader, type MemoryHeader } from "..
 import { validateNotation } from "../lib/validator.js";
 import { findDuplicate } from "../lib/dedup.js";
 import { loadRegistry, findUnknownEntities } from "../lib/registry.js";
-import { upsertIndexEntry } from "../lib/index-manager.js";
+import { upsertIndexEntry, ARCHIVE_FILENAME } from "../lib/index-manager.js";
 import { ensureBidirectionalLinks } from "../lib/links.js";
 import { ensureDecoderFile } from "../lib/decoder-file.js";
 
@@ -161,16 +161,16 @@ export function handleSave(
   // Update index
   if (config.maintainIndex) {
     const indexPath = path.join(memoryDir, config.indexFile);
-    const { truncated } = upsertIndexEntry(
+    const { archived } = upsertIndexEntry(
       indexPath,
       filename,
       input.name,
       input.description,
       config.indexMaxLines
     );
-    if (truncated > 0) {
+    if (archived > 0) {
       warnings.push(
-        `${config.indexFile} reached indexMaxLines (${config.indexMaxLines}); dropped ${truncated} oldest entr${truncated === 1 ? "y" : "ies"}. Memory files themselves are untouched.`
+        `${config.indexFile} reached indexMaxLines (${config.indexMaxLines} entries); moved ${archived} oldest entr${archived === 1 ? "y" : "ies"} to ${ARCHIVE_FILENAME}. Memory files themselves are untouched — restore an entry by moving its line back, or raise indexMaxLines in recall.config.jsonc.`
       );
     }
   }

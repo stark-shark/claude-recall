@@ -3222,8 +3222,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path13) {
-      let input = path13;
+    function removeDotSegments(path14) {
+      let input = path14;
       const output = [];
       let nextSlash = -1;
       let len = 0;
@@ -3422,8 +3422,8 @@ var require_schemes = __commonJS({
         wsComponent.secure = void 0;
       }
       if (wsComponent.resourceName) {
-        const [path13, query] = wsComponent.resourceName.split("?");
-        wsComponent.path = path13 && path13 !== "/" ? path13 : void 0;
+        const [path14, query] = wsComponent.resourceName.split("?");
+        wsComponent.path = path14 && path14 !== "/" ? path14 : void 0;
         wsComponent.query = query;
         wsComponent.resourceName = void 0;
       }
@@ -7157,8 +7157,8 @@ function getErrorMap() {
 
 // node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue = (params) => {
-  const { data, path: path13, errorMaps, issueData } = params;
-  const fullPath = [...path13, ...issueData.path || []];
+  const { data, path: path14, errorMaps, issueData } = params;
+  const fullPath = [...path14, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -7273,11 +7273,11 @@ var errorUtil;
 
 // node_modules/zod/v3/types.js
 var ParseInputLazyPath = class {
-  constructor(parent, value, path13, key) {
+  constructor(parent, value, path14, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path13;
+    this._path = path14;
     this._key = key;
   }
   get path() {
@@ -10921,10 +10921,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path13) {
-  if (!path13)
+function getElementAtPath(obj, path14) {
+  if (!path14)
     return obj;
-  return path13.reduce((acc, key) => acc?.[key], obj);
+  return path14.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -11307,11 +11307,11 @@ function aborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path13, issues) {
+function prefixIssues(path14, issues) {
   return issues.map((iss) => {
     var _a2;
     (_a2 = iss).path ?? (_a2.path = []);
-    iss.path.unshift(path13);
+    iss.path.unshift(path14);
     return iss;
   });
 }
@@ -23220,7 +23220,7 @@ var StdioServerTransport = class {
 };
 
 // src/index.ts
-import * as path12 from "node:path";
+import * as path13 from "node:path";
 import * as os2 from "node:os";
 
 // src/lib/config.ts
@@ -23310,7 +23310,7 @@ function ensureMemoryDir(projectHash, projectsRoot = DEFAULT_PROJECTS_ROOT) {
 
 // src/tools/save.ts
 import * as fs7 from "node:fs";
-import * as path4 from "node:path";
+import * as path5 from "node:path";
 
 // src/lib/symbols.ts
 var VALID_TYPES = ["fb", "proj", "ref", "usr"];
@@ -23786,8 +23786,42 @@ function findUnknownEntities(content, registry2) {
 
 // src/lib/index-manager.ts
 import * as fs4 from "node:fs";
+import * as path2 from "node:path";
+var ARCHIVE_FILENAME = "MEMORY_ARCHIVE.md";
 var ENTRY_REGEX = /^-\s+\[(.+?)\]\((.+?)\)\s*[—-]\s*(.+)$/;
-function upsertIndexEntry(indexPath, filename, name, description, maxLines) {
+function collapseBlankRuns(lines) {
+  const out = [];
+  for (const line of lines) {
+    if (line.trim() === "" && (out.length === 0 || out[out.length - 1].trim() === "")) {
+      continue;
+    }
+    out.push(line);
+  }
+  while (out.length > 0 && out[out.length - 1].trim() === "") out.pop();
+  return out;
+}
+function appendToArchive(archivePath, entryLines) {
+  let existing;
+  if (fs4.existsSync(archivePath)) {
+    existing = collapseBlankRuns(fs4.readFileSync(archivePath, "utf-8").split("\n"));
+  } else {
+    existing = [
+      "# Memory Index Archive",
+      "",
+      "Entries rotated out of the index when indexMaxLines was exceeded.",
+      "Memory files are untouched \u2014 move a line back to the index to re-surface it.",
+      ""
+    ];
+  }
+  for (const line of entryLines) {
+    const m = line.trim().match(ENTRY_REGEX);
+    if (m) {
+      existing = existing.filter((l) => !l.includes(`(${m[2]})`));
+    }
+  }
+  fs4.writeFileSync(archivePath, [...existing, ...entryLines].join("\n") + "\n", "utf-8");
+}
+function upsertIndexEntry(indexPath, filename, name, description, maxEntries) {
   let lines = [];
   if (fs4.existsSync(indexPath)) {
     lines = fs4.readFileSync(indexPath, "utf-8").split("\n");
@@ -23806,27 +23840,26 @@ function upsertIndexEntry(indexPath, filename, name, description, maxLines) {
   if (!found) {
     lines.push(newEntry);
   }
-  let truncated = 0;
-  if (lines.length > maxLines) {
-    let headerEnd = 0;
-    while (headerEnd < lines.length && !ENTRY_REGEX.test(lines[headerEnd].trim())) {
-      headerEnd++;
-    }
-    const header = lines.slice(0, headerEnd);
-    const entries = lines.slice(headerEnd);
-    const keepEntries = Math.max(0, maxLines - header.length);
-    if (entries.length > keepEntries) {
-      truncated = entries.length - keepEntries;
-      lines = [...header, ...entries.slice(truncated)];
-    }
+  lines = collapseBlankRuns(lines);
+  let archived = 0;
+  const entryIndexes = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (ENTRY_REGEX.test(lines[i].trim())) entryIndexes.push(i);
+  }
+  if (entryIndexes.length > maxEntries) {
+    archived = entryIndexes.length - maxEntries;
+    const toArchive = new Set(entryIndexes.slice(0, archived));
+    const archivedLines = lines.filter((_, i) => toArchive.has(i));
+    lines = collapseBlankRuns(lines.filter((_, i) => !toArchive.has(i)));
+    appendToArchive(path2.join(path2.dirname(indexPath), ARCHIVE_FILENAME), archivedLines);
   }
   fs4.writeFileSync(indexPath, lines.join("\n") + "\n", "utf-8");
-  return { truncated };
+  return { archived };
 }
 
 // src/lib/links.ts
 import * as fs5 from "node:fs";
-import * as path2 from "node:path";
+import * as path3 from "node:path";
 function ensureBidirectionalLinks(sourceMemory, targetLinks, memoryDir) {
   const crossProject = [];
   for (const target of targetLinks) {
@@ -23834,7 +23867,7 @@ function ensureBidirectionalLinks(sourceMemory, targetLinks, memoryDir) {
       crossProject.push(target);
       continue;
     }
-    const targetPath = path2.join(memoryDir, `${target}.md`);
+    const targetPath = path3.join(memoryDir, `${target}.md`);
     if (!fs5.existsSync(targetPath)) continue;
     const content = fs5.readFileSync(targetPath, "utf-8");
     const header = parseHeader(content);
@@ -23852,7 +23885,7 @@ ${body}`;
 
 // src/lib/decoder-file.ts
 import * as fs6 from "node:fs";
-import * as path3 from "node:path";
+import * as path4 from "node:path";
 var DECODER_FILENAME = "RECALL_NOTATION.md";
 var DECODER_CONTENT = `# Recall Notation Cheatsheet
 
@@ -23926,7 +23959,7 @@ recreated the next time a memory is saved. Edit if you want a custom cheatsheet;
 it will be overwritten only if the file is missing.*
 `;
 function ensureDecoderFile(memoryDir) {
-  const target = path3.join(memoryDir, DECODER_FILENAME);
+  const target = path4.join(memoryDir, DECODER_FILENAME);
   if (fs6.existsSync(target)) return;
   try {
     fs6.writeFileSync(target, DECODER_CONTENT, "utf8");
@@ -23946,7 +23979,7 @@ function todayStr() {
 function handleSave(input, memoryDir, config3) {
   const warnings = [];
   const filename = nameToFilename(input.name, input.type);
-  const filePath = path4.join(memoryDir, filename);
+  const filePath = path5.join(memoryDir, filename);
   if (config3.notationEnforcement !== "off") {
     const validation = validateNotation(input.content, input.type);
     if (config3.notationEnforcement === "strict" && !validation.valid) {
@@ -23969,7 +24002,7 @@ Compress using the Recall symbol grammar before saving.`,
   for (const f of fs7.readdirSync(memoryDir)) {
     if (f.endsWith(".md") && f !== "MEMORY.md" && f !== "REGISTRY.md" && f !== filename) {
       try {
-        const content = fs7.readFileSync(path4.join(memoryDir, f), "utf-8");
+        const content = fs7.readFileSync(path5.join(memoryDir, f), "utf-8");
         const body = stripHeader(content);
         existingFiles.set(f, body);
       } catch (err) {
@@ -23986,7 +24019,7 @@ Compress using the Recall symbol grammar before saving.`,
       filename
     };
   }
-  const registryPath = path4.join(memoryDir, config3.registryFile);
+  const registryPath = path5.join(memoryDir, config3.registryFile);
   const registry2 = loadRegistry(registryPath);
   const unknownEntities = findUnknownEntities(input.content, registry2);
   if (unknownEntities.length > 0) {
@@ -24034,17 +24067,17 @@ ${input.content}
   fs7.writeFileSync(filePath, fileContent, "utf-8");
   ensureDecoderFile(memoryDir);
   if (config3.maintainIndex) {
-    const indexPath = path4.join(memoryDir, config3.indexFile);
-    const { truncated } = upsertIndexEntry(
+    const indexPath = path5.join(memoryDir, config3.indexFile);
+    const { archived } = upsertIndexEntry(
       indexPath,
       filename,
       input.name,
       input.description,
       config3.indexMaxLines
     );
-    if (truncated > 0) {
+    if (archived > 0) {
       warnings.push(
-        `${config3.indexFile} reached indexMaxLines (${config3.indexMaxLines}); dropped ${truncated} oldest entr${truncated === 1 ? "y" : "ies"}. Memory files themselves are untouched.`
+        `${config3.indexFile} reached indexMaxLines (${config3.indexMaxLines} entries); moved ${archived} oldest entr${archived === 1 ? "y" : "ies"} to ${ARCHIVE_FILENAME}. Memory files themselves are untouched \u2014 restore an entry by moving its line back, or raise indexMaxLines in recall.config.jsonc.`
       );
     }
   }
@@ -24079,7 +24112,7 @@ ${warnings.map((w) => `  \u26A0 ${w}`).join("\n")}`;
 
 // src/tools/load.ts
 import * as fs8 from "node:fs";
-import * as path5 from "node:path";
+import * as path6 from "node:path";
 
 // src/lib/decode.ts
 function expandSymbols(text) {
@@ -24150,14 +24183,14 @@ function findMemoryFile(nameOrFile, memoryDirs) {
     for (const f of fs8.readdirSync(memoryDir)) {
       if (!f.endsWith(".md") || f === "MEMORY.md" || f === "REGISTRY.md") continue;
       if (isFilename && f === nameOrFile) {
-        return { filePath: path5.join(memoryDir, f), memoryDir, projectHash };
+        return { filePath: path6.join(memoryDir, f), memoryDir, projectHash };
       }
       if (!isFilename) {
         try {
-          const content = fs8.readFileSync(path5.join(memoryDir, f), "utf-8");
+          const content = fs8.readFileSync(path6.join(memoryDir, f), "utf-8");
           const header = parseHeader(content);
           if (header && header.name.toLowerCase() === nameOrFile.toLowerCase()) {
-            return { filePath: path5.join(memoryDir, f), memoryDir, projectHash };
+            return { filePath: path6.join(memoryDir, f), memoryDir, projectHash };
           }
         } catch {
         }
@@ -24188,7 +24221,7 @@ ${body}`;
     fs8.writeFileSync(found.filePath, content, "utf-8");
   }
   if (input.expanded) {
-    const registryPath = path5.join(found.memoryDir, config3.registryFile);
+    const registryPath = path6.join(found.memoryDir, config3.registryFile);
     const registry2 = loadRegistry(registryPath);
     const body = stripHeader(content);
     const decoded = decodeMemory(body, registry2);
@@ -24213,7 +24246,7 @@ ${decoded}`;
 
 // src/tools/search.ts
 import * as fs9 from "node:fs";
-import * as path6 from "node:path";
+import * as path7 from "node:path";
 function handleSearch(input, memoryDirs) {
   const matches = [];
   const queryLower = input.query.toLowerCase();
@@ -24224,7 +24257,7 @@ function handleSearch(input, memoryDirs) {
       if (!f.endsWith(".md") || f === "MEMORY.md" || f === "REGISTRY.md") continue;
       let content;
       try {
-        content = fs9.readFileSync(path6.join(memoryDir, f), "utf-8");
+        content = fs9.readFileSync(path7.join(memoryDir, f), "utf-8");
       } catch {
         continue;
       }
@@ -24262,7 +24295,7 @@ function handleSearch(input, memoryDirs) {
 
 // src/tools/check.ts
 import * as fs10 from "node:fs";
-import * as path7 from "node:path";
+import * as path8 from "node:path";
 function loadAllMemories(memoryDirs) {
   const memories = [];
   for (const { memoryDir, projectHash } of memoryDirs) {
@@ -24271,7 +24304,7 @@ function loadAllMemories(memoryDirs) {
       if (!f.endsWith(".md") || f === "MEMORY.md" || f === "REGISTRY.md") continue;
       let content;
       try {
-        content = fs10.readFileSync(path7.join(memoryDir, f), "utf-8");
+        content = fs10.readFileSync(path8.join(memoryDir, f), "utf-8");
       } catch {
         continue;
       }
@@ -24340,10 +24373,10 @@ ${stale.join("\n")}`;
 function checkRegistry(memories, memoryDirs, registryFile) {
   const issues = [];
   for (const { memoryDir } of memoryDirs) {
-    const registryPath = path7.join(memoryDir, registryFile);
+    const registryPath = path8.join(memoryDir, registryFile);
     const registry2 = loadRegistry(registryPath);
     const dirMemories = memories.filter(
-      (m) => fs10.existsSync(path7.join(memoryDir, m.filename))
+      (m) => fs10.existsSync(path8.join(memoryDir, m.filename))
     );
     for (const m of dirMemories) {
       const unknown2 = findUnknownEntities(m.content, registry2);
@@ -24423,7 +24456,7 @@ ${issues.join("\n")}`;
 function checkCompression(memories, memoryDirs, config3) {
   const registries = /* @__PURE__ */ new Map();
   for (const { projectHash, memoryDir } of memoryDirs) {
-    registries.set(projectHash, loadRegistry(path7.join(memoryDir, config3.registryFile)));
+    registries.set(projectHash, loadRegistry(path8.join(memoryDir, config3.registryFile)));
   }
   const tolerance = config3.healthChecks.compressionTolerancePct;
   const issues = [];
@@ -24484,16 +24517,16 @@ function handleCheck(input, memoryDirs, config3) {
 
 // src/tools/decode.ts
 import * as fs11 from "node:fs";
-import * as path8 from "node:path";
+import * as path9 from "node:path";
 function findAndDecode(nameOrFile, memoryDirs) {
   const isFilename = nameOrFile.endsWith(".md");
   for (const { memoryDir } of memoryDirs) {
     if (!fs11.existsSync(memoryDir)) continue;
-    const registryPath = path8.join(memoryDir, "REGISTRY.md");
+    const registryPath = path9.join(memoryDir, "REGISTRY.md");
     const registry2 = loadRegistry(registryPath);
     for (const f of fs11.readdirSync(memoryDir)) {
       if (!f.endsWith(".md") || f === "MEMORY.md" || f === "REGISTRY.md") continue;
-      const filePath = path8.join(memoryDir, f);
+      const filePath = path9.join(memoryDir, f);
       let content;
       try {
         content = fs11.readFileSync(filePath, "utf-8");
@@ -24523,13 +24556,13 @@ function handleDecode(input, memoryDirs) {
     const sections = [];
     for (const { memoryDir } of memoryDirs) {
       if (!fs11.existsSync(memoryDir)) continue;
-      const registryPath = path8.join(memoryDir, "REGISTRY.md");
+      const registryPath = path9.join(memoryDir, "REGISTRY.md");
       const registry2 = loadRegistry(registryPath);
       for (const f of fs11.readdirSync(memoryDir)) {
         if (!f.endsWith(".md") || f === "MEMORY.md" || f === "REGISTRY.md") continue;
         let content;
         try {
-          content = fs11.readFileSync(path8.join(memoryDir, f), "utf-8");
+          content = fs11.readFileSync(path9.join(memoryDir, f), "utf-8");
         } catch {
           continue;
         }
@@ -24556,9 +24589,9 @@ ${decoded}`);
 }
 
 // src/tools/registry.ts
-import * as path9 from "node:path";
+import * as path10 from "node:path";
 function handleRegistry(input, memoryDir, registryFile) {
-  const registryPath = path9.join(memoryDir, registryFile);
+  const registryPath = path10.join(memoryDir, registryFile);
   const registry2 = loadRegistry(registryPath);
   switch (input.action) {
     case "list": {
@@ -24621,21 +24654,21 @@ ${lines.join("\n")}` };
 
 // src/tools/export.ts
 import * as fs12 from "node:fs";
-import * as path10 from "node:path";
+import * as path11 from "node:path";
 function handleExport(input, memoryDirs, registryFile) {
   const dirs = input.project ? memoryDirs.filter((d) => d.projectHash === input.project) : memoryDirs;
   const allMemories = [];
   const allRegistry = {};
   for (const { memoryDir, projectHash } of dirs) {
     if (!fs12.existsSync(memoryDir)) continue;
-    const registryPath = path10.join(memoryDir, registryFile);
+    const registryPath = path11.join(memoryDir, registryFile);
     const registry2 = loadRegistry(registryPath);
     for (const [code, expansion] of registry2) {
       allRegistry[code] = expansion;
     }
     for (const f of fs12.readdirSync(memoryDir)) {
       if (!f.endsWith(".md") || f === "MEMORY.md" || f === registryFile) continue;
-      const raw = fs12.readFileSync(path10.join(memoryDir, f), "utf-8");
+      const raw = fs12.readFileSync(path11.join(memoryDir, f), "utf-8");
       const header = parseHeader(raw);
       if (!header) continue;
       const body = stripHeader(raw);
@@ -24662,7 +24695,7 @@ function handleExport(input, memoryDirs, registryFile) {
 
 // src/tools/import.ts
 import * as fs13 from "node:fs";
-import * as path11 from "node:path";
+import * as path12 from "node:path";
 function handleImport(input, memoryDir, config3) {
   if (!fs13.existsSync(input.file)) {
     return { text: `File not found: ${input.file}`, isError: true };
@@ -24686,7 +24719,7 @@ function handleImport(input, memoryDir, config3) {
   let skipped = 0;
   const skippedNames = [];
   if (data.registry && Object.keys(data.registry).length > 0) {
-    const registryPath = path11.join(memoryDir, config3.registryFile);
+    const registryPath = path12.join(memoryDir, config3.registryFile);
     const registry2 = loadRegistry(registryPath);
     for (const [code, expansion] of Object.entries(data.registry)) {
       if (!registry2.has(code)) {
@@ -24696,7 +24729,7 @@ function handleImport(input, memoryDir, config3) {
     saveRegistry(registryPath, registry2);
   }
   for (const mem of data.memories ?? []) {
-    const filePath = path11.join(memoryDir, mem.filename);
+    const filePath = path12.join(memoryDir, mem.filename);
     if (fs13.existsSync(filePath)) {
       skipped++;
       skippedNames.push(mem.filename);
@@ -24730,8 +24763,8 @@ ${mem.content}
 
 // src/index.ts
 var VERSION = true ? "0.5.0" : "0.0.0-dev";
-var SERVER_DIR = path12.join(os2.homedir(), ".claude", "recall");
-var CONFIG_PATH = path12.join(SERVER_DIR, "recall.config.jsonc");
+var SERVER_DIR = path13.join(os2.homedir(), ".claude", "recall");
+var CONFIG_PATH = path13.join(SERVER_DIR, "recall.config.jsonc");
 var config2 = loadConfig(CONFIG_PATH);
 var server = new McpServer(
   { name: "recall", version: VERSION },
@@ -24758,7 +24791,7 @@ var server = new McpServer(
   }
 );
 function getProjectsRoot() {
-  return path12.join(os2.homedir(), ".claude", "projects");
+  return path13.join(os2.homedir(), ".claude", "projects");
 }
 server.registerTool(
   "recall_save",
